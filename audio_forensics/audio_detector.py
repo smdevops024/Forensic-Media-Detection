@@ -28,9 +28,12 @@ class AudioDetector:
         mfccs = mfccs.T
         
         # Scale features (important for x-vectors)
-        if self.scaler.mean_ is None:
-            self.scaler.fit(mfccs)
-        mfccs = self.scaler.transform(mfccs)
+        # For a single-file analysis in a CLI, we use fit_transform
+        # as the scaler is new for every call.
+        if not hasattr(self.scaler, 'mean_'):
+            mfccs = self.scaler.fit_transform(mfccs)
+        else:
+            mfccs = self.scaler.transform(mfccs)
         
         return mfccs
 
@@ -143,7 +146,8 @@ class AudioDetector:
         return {
             "synthesis_confidence": float(synthesis_confidence),
             "avg_mfcc_variance": float(avg_mfcc_variance),
-            "spectral_flatness_mean": spectral_analysis["spectral_flatness_mean"]
+            "spectral_flatness_mean": spectral_analysis["spectral_flatness_mean"],
+            "indicators": ["MFCC Variance", "Spectral Flatness"] # Placeholder for display in CLI
         }
 
     def train(self, train_dataset, validation_dataset=None, epochs=10, batch_size=32):
